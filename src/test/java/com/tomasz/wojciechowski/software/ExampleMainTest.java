@@ -4,10 +4,7 @@ package com.tomasz.wojciechowski.software;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.io.OutputStream;
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.List;
 
 
 class ExampleMainTest {
@@ -16,17 +13,26 @@ class ExampleMainTest {
 
     private static class DecoratedOutputStream extends PrintStream{
 
-        private OutputStream source;
+        private PrintStream source;
         private String lastMessage;
 
-        public DecoratedOutputStream(OutputStream out) {
+        public DecoratedOutputStream(PrintStream out) {
             super(out);
             this.source = out;
         }
 
         @Override
         public void println(String x) {
-            super.println(x);
+            lastMessage = x;
+            source.println(x);
+        }
+
+        public String getLastMessage(){
+            return lastMessage;
+        }
+
+        public PrintStream getOriginalStream(){
+            return source;
         }
     }
 
@@ -34,15 +40,14 @@ class ExampleMainTest {
     public void shouldPrintHelloWord() throws NoSuchFieldException, IllegalAccessException {
         //given
         String expectedResult = "Hello World";
-        List<String> printedData = new ArrayList<>();
-
+        DecoratedOutputStream decoratedOut = new DecoratedOutputStream(System.out);
+        System.setOut(decoratedOut);
         //when
         classUnderTest.main(new String[0]);
 
         //then
-        System.setOut(original);
-        String result = printedData.get(0);
-        Assertions.assertEquals(expectedResult, result);
+        System.setOut(decoratedOut.getOriginalStream());
+        Assertions.assertEquals(expectedResult, decoratedOut.getLastMessage());
 
     }
 
